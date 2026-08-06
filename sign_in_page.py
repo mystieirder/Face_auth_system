@@ -494,7 +494,7 @@ if (!SpeechRecognition) {
     if (command === 'next field') return focusNextField(activeElem);
 
     const fieldMap = {
-      'select full name': 'fullName', 'select full legal name': 'fullName',
+      'select full name': 'fullName', 'select Enter full name': 'fullName',
       'select contact phone': 'contactPhone', 'select phone': 'contactPhone',
       'select email address': 'emailAddress', 'select email': 'emailAddress',
       'select date of birth': 'dob',
