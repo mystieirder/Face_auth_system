@@ -5,6 +5,11 @@ import time
 import json
 
 def capture_face_embedding():
+    # NFR-1: Consent check before biometric capture
+    consent = input("Do you consent to facial biometric data collection? (yes/no): ")
+    if consent.lower() != "yes":
+        return None, "Enrollment cancelled — consent not given"
+
     video = cv2.VideoCapture(0)
     for _ in range(15):
         ret, frame = video.read()
@@ -14,7 +19,6 @@ def capture_face_embedding():
     if not ret:
         return None, "Webcam not detected"
 
-    # Brightness check (basic environmental validation)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     brightness = gray.mean()
     if brightness < 50:
@@ -40,7 +44,6 @@ if __name__ == "__main__":
         print(message)
         print("Embedding vector length:", len(embedding))
 
-        # Save embedding to a JSON file (acts as our "enrolled" template)
         with open("enrolled_face.json", "w") as f:
             json.dump(embedding.tolist(), f)
         print("Embedding saved to enrolled_face.json")
