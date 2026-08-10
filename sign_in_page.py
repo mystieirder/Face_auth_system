@@ -22,6 +22,10 @@ from flask import (
 )
 
 app = Flask(__name__)
+import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "biometric_module"))
+from biometric_auth_routes import attempt_face_login
+from db import get_connection
 app.secret_key = os.environ.get("APP_SECRET_KEY", "dev-secret-change-me")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -72,13 +76,53 @@ LOGIN_HTML = """
   <h2>Welcome</h2>
   <p class="sub">Sign in or create an account to continue.</p>
   {% if error %}<p class="err">{{ error }}</p>{% endif %}
-  <form method="POST">
+<form method="POST">
     <div class="fg"><label for="username">Username</label>
       <input type="text" id="username" name="username" required></div>
-    <div class="fg"><label for="password">Password</label>
-      <input type="password" id="password" name="password" required></div>
-    <button type="submit">Sign In / Register</button>
-  </form>
+<div class="fg">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required>
+      <div style="margin-top:6px; display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" id="showPassword" style="width:auto; cursor:pointer;">
+        <label for="showPassword" style="margin:0; font-weight:normal; font-size:.85rem; cursor:pointer;">Show password</label>
+      </div>
+    </div>          <button type="submit" name="action" value="login">Sign In</button>
+    <button type="submit" name="action" value="register" style="background:#64748b; margin-top:10px;">Register New Account</button>
+  </form><div style="text-align:center; margin-top:16px;">
+    <button type="button" id="faceLoginBtn" style="background:#1e293b;">Sign in with Face</button>
+    <p id="faceLoginStatus" style="font-size:.85rem; color:#64748b; margin-top:8px;"></p>
+  </div>
+
+<script>
+    document.getElementById('faceLoginBtn').addEventListener('click', async () => {
+      const status = document.getElementById('faceLoginStatus');
+      status.innerText = 'Please look at the camera and blink naturally...';
+      try {
+        const resp = await fetch('/face-login', { method: 'POST' });
+        const data = await resp.json();
+        if (data.status === 'success') {
+          status.innerText = data.message;
+          window.location.href = data.redirect;
+        } else {
+          status.innerText = data.message + ' — Falling back to password login. Please enter your credentials below.';
+          status.style.color = '#dc2626';
+          document.getElementById('username').focus();
+          document.getElementById('username').style.borderColor = '#16a34a';
+          document.getElementById('password').style.borderColor = '#16a34a';
+        }
+} catch (err) {
+        status.innerText = 'Error: ' + err;
+      }
+    });
+  </script>
+
+<script>
+  const passwordInput = document.getElementById('password');
+  const showPasswordCheckbox = document.getElementById('showPassword');
+  showPasswordCheckbox.addEventListener('change', () => {
+    passwordInput.type = showPasswordCheckbox.checked ? 'text' : 'password';
+  });
+</script>
 </div>
 </body>
 </html>
@@ -272,7 +316,24 @@ function persistField(input) {
 
 window.addEventListener('DOMContentLoaded', restoreFormState);
 inputs.forEach(input => input.addEventListener('input', () => persistField(input)));
-
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const formData = new FormData(form);
+  try {
+    const resp = await fetch('/submit-profile', { method: 'POST', body: formData });
+    const data = await resp.json();
+    if (data.status === 'success') {
+      saveIndicator.innerText = 'Profile submitted successfully!';
+      saveIndicator.style.color = '#16a34a';
+    } else {
+      saveIndicator.innerText = 'Submission failed: ' + (data.message || 'unknown error');
+      saveIndicator.style.color = '#dc2626';
+    }
+  } catch (err) {
+    saveIndicator.innerText = 'Error: ' + err;
+    saveIndicator.style.color = '#dc2626';
+  }
+});
 function applyAccessibilityMode(mode) {
   document.body.classList.toggle('high-contrast', mode === 'high-contrast');
   document.body.style.fontSize = (mode === 'large-text') ? '1.2rem' : '';
@@ -540,7 +601,27 @@ def index():
     if session.get("authenticated"):
         return redirect(url_for("profile_page"))
     return redirect(url_for("login_page"))
+@app.route("/face-login", methods=["POST"])
+def face_login():
+    success, message = attempt_face_login()
 
+    if success:
+        username = "face_user"
+
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE username = ?", username)
+        row = cursor.fetchone()
+        if row is None:
+            cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", username, "")
+            conn.commit()
+        conn.close()
+
+        session["authenticated"] = True
+        session["username"] = username
+        return jsonify({"status": "success", "message": message, "redirect": url_for("profile_page")})
+    else:
+        return jsonify({"status": "error", "message": message})
 
 @app.route("/login", methods=["GET", "POST"])
 def login_page():
@@ -551,15 +632,29 @@ def login_page():
         password = request.form.get("password") or ""
 
         if not username or not password:
-            error = "Username and password are required."
+          error = "Username and password are required."
         else:
-            user = USERS.get(username)
-            if user is None:
-                USERS[username] = {"password": password, "profile": {}}
-            elif user["password"] != password:
+          action = request.form.get("action", "login")
+
+          conn = get_connection()
+          cursor = conn.cursor()
+          cursor.execute("SELECT id, password FROM users WHERE username = ?", username)
+          row = cursor.fetchone()
+
+        if action == "register":
+            if row is not None:
+                error = "Username already exists. Please sign in instead."
+            else:
+                cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", username, password)
+                conn.commit()
+        else:  # action == "login"
+            if row is None:
+                error = "Account not found. Please register first."
+            elif row.password != password:
                 error = "Incorrect password."
 
-            if error is None:
+        conn.close()
+        if error is None:
                 session["authenticated"] = True
                 session["username"] = username
                 return redirect(url_for("profile_page"))  # FR-3.1
@@ -590,7 +685,22 @@ def profile_page():
     if not session.get("authenticated"):
         return redirect(url_for("login_page"))
     username = session["username"]
-    profile = USERS.get(username, {}).get("profile", {})
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE username = ?", username)
+    user_row = cursor.fetchone()
+
+    profile = {}
+    if user_row:
+        cursor.execute("SELECT full_name, contact_phone, email_address, dob, physical_address, accessibility_mode FROM profiles WHERE user_id = ?", user_row.id)
+        row = cursor.fetchone()
+        if row:
+            profile = {
+                "full_name": row.full_name, "contact_phone": row.contact_phone,
+                "email_address": row.email_address, "dob": str(row.dob) if row.dob else "",
+                "physical_address": row.physical_address, "accessibility_mode": row.accessibility_mode
+            }
+    conn.close()    
     return render_template_string(PROFILE_HTML, profile=profile, photo_url=_photo_url(username))
 
 
@@ -602,10 +712,33 @@ def submit_profile():
 
     username = session["username"]
     profile = {field: request.form.get(field, "") for field in PROFILE_FIELDS}
-    USERS.setdefault(username, {"password": "", "profile": {}})
-    USERS[username]["profile"] = profile
-    return jsonify({"status": "success", "message": "Profile submitted successfully", "data": profile})
 
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE username = ?", username)
+    user_row = cursor.fetchone()
+    user_id = user_row.id
+
+    cursor.execute("SELECT id FROM profiles WHERE user_id = ?", user_id)
+    existing = cursor.fetchone()
+
+    if existing:
+        cursor.execute("""
+            UPDATE profiles SET full_name=?, contact_phone=?, email_address=?, dob=?, physical_address=?, accessibility_mode=?
+            WHERE user_id=?
+        """, profile["full_name"], profile["contact_phone"], profile["email_address"],
+            profile["dob"], profile["physical_address"], profile["accessibility_mode"], user_id)
+    else:
+        cursor.execute("""
+            INSERT INTO profiles (user_id, full_name, contact_phone, email_address, dob, physical_address, accessibility_mode)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, user_id, profile["full_name"], profile["contact_phone"], profile["email_address"],
+            profile["dob"], profile["physical_address"], profile["accessibility_mode"])
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"status": "success", "message": "Profile submitted successfully", "data": profile})
 
 @app.route("/api/upload-photo", methods=["POST"])
 def upload_photo():
@@ -635,4 +768,4 @@ def get_photo(username):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000)

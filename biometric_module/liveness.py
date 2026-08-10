@@ -41,6 +41,9 @@ def check_liveness(duration=5, ear_threshold=0.25):
         right_ear = eye_aspect_ratio(right_eye)
         avg_ear = (left_ear + right_ear) / 2.0
 
+       
+        print(f"EAR: {avg_ear:.3f}")  # ADD THIS LINE
+
         if avg_ear < ear_threshold:
             eyes_were_closed = True
         elif eyes_were_closed and avg_ear >= ear_threshold:
