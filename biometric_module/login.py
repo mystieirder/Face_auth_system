@@ -6,16 +6,19 @@ import json
 from liveness import check_liveness
 from encryption_utils import decrypt_data
 import time as timing_module
-import time as timing_module
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ENROLLED_FACE_PATH = os.path.join(BASE_DIR, "enrolled_face.enc")
 
 # ---------- Facial Authentication ----------
 
 def login_face():
     try:
-        with open("enrolled_face.enc", "rb") as f:
+       with open(ENROLLED_FACE_PATH, "rb") as f:
             encrypted = f.read()
-        decrypted_str = decrypt_data(encrypted)
-        enrolled_embedding = np.array(json.loads(decrypted_str))
+            decrypted_str = decrypt_data(encrypted)
+            enrolled_embedding = np.array(json.loads(decrypted_str))
     except FileNotFoundError:
          return False, "No enrolled face found — please register first"
 
