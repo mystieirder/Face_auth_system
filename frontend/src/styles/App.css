@@ -1,0 +1,835 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 0;
+}
+
+.app-container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* ===== Landing page ===== */
+
+.landing {
+  background: #fdfdf5;
+  min-height: 100vh;
+}
+
+.landing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 3rem;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.brand-icon {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #14161f;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.brand-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.brand-tagline {
+  font-size: 0.75rem;
+  color: #777;
+}
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #14161f;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  width: auto;
+}
+
+.primary-btn {
+  background: #2d5bff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: auto;
+  margin: 0;
+}
+
+.primary-btn.small {
+  padding: 0.5rem 1.1rem;
+  font-size: 0.85rem;
+}
+
+.secondary-btn {
+  background: #fff;
+  color: #14161f;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: auto;
+  margin: 0;
+}
+
+.hero {
+  display: flex;
+  gap: 3rem;
+  padding: 4rem 3rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.hero-copy {
+  flex: 1 1 480px;
+}
+
+.eyebrow {
+  color: #2d5bff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  line-height: 1.1;
+  margin: 0 0 1.25rem;
+  font-weight: 800;
+}
+
+.hero h1 .accent {
+  color: #2d5bff;
+}
+
+.hero-sub {
+  font-size: 1rem;
+  color: #444;
+  line-height: 1.5;
+  max-width: 480px;
+  margin-bottom: 1.5rem;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.fine-print {
+  font-size: 0.75rem;
+  color: #777;
+  max-width: 460px;
+}
+
+.hero-card {
+  flex: 1 1 360px;
+  background: #fff;
+  border: 1px solid #14161f;
+  border-radius: 12px;
+  padding: 1.75rem;
+  max-width: 440px;
+}
+
+.hero-card h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.hero-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+  color: #333;
+  line-height: 1.7;
+}
+
+.features {
+  padding: 2rem 3rem 4rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.features h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+.feature-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.feature-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #14161f;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.feature-card h4 {
+  margin: 0 0 0.5rem;
+}
+
+.feature-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .feature-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .landing-header {
+    padding: 1rem 1.5rem;
+  }
+  .hero {
+    padding: 2.5rem 1.5rem;
+  }
+  .features {
+    padding: 1.5rem 1.5rem 3rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+  .hero h1 {
+    font-size: 2.1rem;
+  }
+}
+
+/* ===== Registration credential — design tokens =====
+   Palette: ink navy + brass accent (identity/verification theme,
+   deliberately not the landing page's blue — this screen reads as
+   a credential/dossier, not a marketing surface).
+   Type: serif display for headings (Georgia stack — no web-font
+   dependency), system sans for body/UI/labels.
+*/
+
+:root {
+  --cred-ink: #14161f;
+  --cred-paper: #eef0f4;
+  --cred-card: #fdfcf9;
+  --cred-accent: #a97d33;
+  --cred-accent-deep: #7c5a22;
+  --cred-line: #d8d3c7;
+  --cred-success: #3f6b52;
+  --cred-danger: #a13d2a;
+  --cred-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Times New Roman', serif;
+}
+
+.cred-shell {
+  min-height: 100vh;
+  background: var(--cred-paper);
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  padding: 3rem 1.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.cred-shell--single {
+  align-items: center;
+}
+
+/* ---- Left rail: real progress, not decoration ---- */
+
+.cred-rail {
+  width: 220px;
+  flex-shrink: 0;
+  padding-top: 0.5rem;
+}
+
+.rail-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 2.25rem;
+}
+
+.seal {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--cred-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cred-ink);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  background: var(--cred-card);
+}
+
+.seal--done {
+  background: var(--cred-success);
+  border-color: var(--cred-success);
+  color: #fff;
+  margin: 0 auto 1.25rem;
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.4rem;
+}
+
+.rail-brand-name {
+  font-family: var(--cred-serif);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--cred-ink);
+}
+
+.rail-brand-tag {
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a8a86;
+}
+
+.rail-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+.rail-step {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding-bottom: 2rem;
+}
+
+.rail-step::before {
+  content: '';
+  position: absolute;
+  left: 0.65rem;
+  top: 1.6rem;
+  bottom: -0.4rem;
+  width: 1px;
+  background: var(--cred-line);
+}
+
+.rail-step:last-child::before {
+  display: none;
+}
+
+.rail-step.is-done::before {
+  background: var(--cred-accent);
+}
+
+.rail-dot {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--cred-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #9a9690;
+  background: var(--cred-paper);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.rail-step.is-done .rail-dot {
+  background: var(--cred-accent);
+  border-color: var(--cred-accent);
+  color: #fff;
+}
+
+.rail-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.rail-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--cred-ink);
+}
+
+.rail-sub {
+  font-size: 0.72rem;
+  color: #8a8a86;
+  margin-top: 0.1rem;
+}
+
+/* ---- Card ---- */
+
+.cred-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--cred-card);
+  border: 1px solid var(--cred-ink);
+  border-radius: 4px;
+  padding: 2.25rem 2.25rem 2.5rem;
+}
+
+.cred-card--success {
+  text-align: center;
+  max-width: 420px;
+}
+
+.cred-heading {
+  font-family: var(--cred-serif);
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--cred-ink);
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+.cred-subtext {
+  color: #66645d;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin: 0 0 1.75rem;
+}
+
+.cred-section {
+  border-top: 1px solid var(--cred-line);
+  padding-top: 1.1rem;
+  margin-top: 1.1rem;
+}
+
+.cred-section:first-of-type {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.cred-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cred-accent-deep);
+  margin-bottom: 0.9rem;
+}
+
+.cred-field {
+  margin-bottom: 1.1rem;
+}
+
+.cred-field:last-child {
+  margin-bottom: 0;
+}
+
+.cred-field label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+  color: var(--cred-ink);
+}
+
+.cred-field input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #c7c2b5;
+  border-radius: 3px;
+  font-size: 0.92rem;
+  background: #fff;
+  font-family: inherit;
+}
+
+.cred-field input:focus {
+  outline: 2px solid var(--cred-accent);
+  outline-offset: 1px;
+  border-color: var(--cred-accent);
+}
+
+.field-hint {
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  margin: 8px 0;
+}
+
+.field-error {
+  color: var(--cred-danger);
+  font-size: 0.78rem;
+  margin: 0.35rem 0 0;
+}
+
+.policy-box {
+  border-left: 2px solid var(--cred-line);
+  padding: 0.1rem 0 0.1rem 0.75rem;
+  margin-top: 0.65rem;
+}
+
+.policy-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: #66645d;
+}
+
+.policy-list .ok {
+  color: var(--cred-success);
+}
+
+.policy-list .fail {
+  color: #9a9690;
+}
+
+.enrolled-badge {
+  width: 100%;
+  padding: 0.65rem;
+  background: var(--cred-success);
+  color: #fff;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 0.88rem;
+}
+
+.plan-grid {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.plan-card {
+  flex: 1;
+  text-align: center;
+  border: 1px solid #c7c2b5;
+  background: #fff;
+  border-radius: 3px;
+  padding: 0.8rem 0.5rem;
+  cursor: pointer;
+}
+
+.plan-card.selected {
+  border: 1.5px solid var(--cred-accent);
+  background: #f8f0e2;
+}
+
+.plan-name {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--cred-ink);
+}
+
+.plan-amount {
+  color: var(--cred-accent-deep);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-top: 0.2rem;
+  font-family: var(--cred-serif);
+}
+
+/* ---- Verification / webcam scan panel ---- */
+
+.scan-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.scan-frame {
+  position: relative;
+  width: 320px;
+  max-width: 100%;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #0c0d12;
+  line-height: 0;
+}
+
+.scan-frame video {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: grayscale(0.15) contrast(1.03);
+}
+
+.scan-corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: var(--cred-line);
+  border-style: solid;
+  border-width: 0;
+  transition: border-color 0.2s ease;
+}
+
+.scan-corner--tl { top: 8px; left: 8px; border-top-width: 2px; border-left-width: 2px; }
+.scan-corner--tr { top: 8px; right: 8px; border-top-width: 2px; border-right-width: 2px; }
+.scan-corner--bl { bottom: 8px; left: 8px; border-bottom-width: 2px; border-left-width: 2px; }
+.scan-corner--br { bottom: 8px; right: 8px; border-bottom-width: 2px; border-right-width: 2px; }
+
+.scan-frame.is-ready .scan-corner {
+  border-color: var(--cred-accent);
+}
+
+.scan-frame.is-enrolled .scan-corner {
+  border-color: var(--cred-success);
+}
+
+.scan-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(12, 13, 18, 0.85);
+  color: #cfcdc6;
+  font-size: 0.78rem;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.scan-status {
+  width: 100%;
+}
+
+.env-validator {
+  list-style: none;
+  padding: 0.7rem 0.85rem;
+  margin: 0;
+  text-align: left;
+  font-size: 0.78rem;
+  font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+  background: var(--cred-paper);
+  border: 1px solid var(--cred-line);
+  border-radius: 3px;
+  width: 320px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.env-validator li {
+  padding: 0.2rem 0;
+  color: #8a8a86;
+}
+
+.env-validator .ok {
+  color: var(--cred-success);
+}
+
+.env-validator .fail {
+  color: #9a9690;
+}
+
+.indicator {
+  display: inline-block;
+  width: 1.2rem;
+}
+
+.cred-btn {
+  width: 100%;
+  padding: 0.8rem;
+  background: var(--cred-ink);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  margin-top: 1.75rem;
+}
+
+.cred-btn--scan {
+  margin-top: 0;
+  width: 320px;
+  max-width: 100%;
+}
+
+.cred-btn:hover:not(:disabled) {
+  background: var(--cred-accent-deep);
+}
+
+.cred-btn:disabled {
+  background: #c9c6bd;
+  cursor: not-allowed;
+}
+
+.cred-message {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--cred-ink);
+}
+
+.cred-footer-link {
+  text-align: center;
+  font-size: 0.83rem;
+  color: #66645d;
+  margin: 1.5rem 0 0;
+}
+
+.cred-footer-link a {
+  color: var(--cred-accent-deep);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+  .cred-shell {
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem;
+  }
+  .cred-rail {
+    width: 100%;
+    max-width: 460px;
+  }
+  .rail-steps {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .rail-step {
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 0;
+    flex: 1;
+  }
+  .rail-step::before {
+    left: 1.3rem;
+    right: -1.3rem;
+    top: 0.65rem;
+    bottom: auto;
+    width: auto;
+    height: 1px;
+  }
+  .rail-text {
+    display: none;
+  }
+}
+
+/* ===== Register form (legacy — superseded by .cred-* above) ===== */
+/* ===== Register form (unchanged) ===== */
+
+.register-form {
+  background: #fff;
+  border-radius: 10px;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.register-form h2 {
+  margin-top: 0;
+}
+
+.register-form label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.register-form input {
+  width: 100%;
+  padding: 0.6rem;
+  margin-top: 0.3rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: #666;
+  margin: 0.3rem 0 0;
+}
+
+.error {
+  color: #c0392b;
+  font-size: 0.85rem;
+  margin: 0.3rem 0 0;
+}
+
+.success {
+  color: #27ae60;
+  font-size: 0.9rem;
+}
+
+.register-form button {
+  margin-top: 1.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: #2d6cdf;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.register-form button:disabled {
+  background: #a9bce6;
+  cursor: not-allowed;
+}
+
+.webcam-capture {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.webcam-capture video {
+  border-radius: 8px;
+  background: #000;
+}
+
+/* .env-validator now styled in the .cred-* verification block above */
