@@ -1,0 +1,31 @@
+{
+  "mohithgani24": {
+    "password": "scrypt:32768:8:1$UBvI90knersuY09f$4dd8708def61531962ce3af83c4a86f6352781aa647c513dab3d5c091dd4538bbdf33cf85754ed0c83c6c7315cb2b165b593412d689b8ade1bddb5a5923ff6bf",
+    "email": "mohithgani23@gmail.com",
+    "profile": {}
+  },
+  "mohithgani23": {
+    "password": "scrypt:32768:8:1$SzlIl0nnBpffxuwT$8aa48ebee05672625cdc91f2984aafde7d2b114cbb863663f7822a2fb1140184416355ade20e617f5c09dc194ef6422107d5999330877b94e60ecac01358cd2c",
+    "email": "mohithgani23@gmail.com",
+    "profile": {}
+  },
+  "mohithgani21": {
+    "password": "scrypt:32768:8:1$23ezubfCba0iBMw5$2ff50ec064cfb3577e4ff91b5614a0b1ca967360dd6b5b996835d79114a0f7ba8febf927cd0f03dbf54c8eab6895423e1274611aa958643259eb293febfd2f86",
+    "email": "mohithgani21@gmail.com",
+    "profile": {
+      "email_address": "mohithgani21@gmail.com"
+    }
+  },
+  "pushkalsai31": {
+    "password": "scrypt:32768:8:1$0gkqpra8NXAOyJgQ$d7afc614f8c94b5bb7c7ecc2046c4725ed6fd22397ef89ec0661e08135a63cb43d73ce6d9dcb500b95dc12b87d9beea4131e1da831a04439b78c17844fe8db9e",
+    "email": "pushkalsai31@gmail.com",
+    "profile": {
+      "full_name": "Pushkal Sai A ",
+      "contact_phone": "6361786436",
+      "email_address": "pushkalsai31@gmail.com",
+      "dob": "2006-05-10",
+      "physical_address": "No. 20 , SriGurukrupa , gururaghavendra badavane , T.p kailasam road , Dattagalli 3rd stage , msore , 570033",
+      "accessibility_mode": "default"
+    }
+  }
+}

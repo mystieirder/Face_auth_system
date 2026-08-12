@@ -108,12 +108,12 @@ export default function FaceLoginCapture({ onVerified, onCameraUnavailable }) {
     }
 
     setStage('extracting');
-    setStatusMessage('Verifying face…');
+    setStatusMessage('Capturing a short face sample…');
     try {
-      const embedding = await extractFaceEmbedding(videoRef.current);
+      const embeddings = await extractFaceEmbedding(videoRef.current, 3);
       setStage('done');
       setStatusMessage('Face verified.');
-      onVerified(embedding, true);
+      onVerified(embeddings, true);
     } catch (err) {
       setStatusMessage('Could not verify — please try again.');
       setStage('idle');

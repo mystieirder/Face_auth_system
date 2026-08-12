@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { findByEmailOrUsername, createUser } = require('../models/User');
-const { validateEnvironment, isFaceMatch } = require('../utils/faceUtils');
+const { validateEnvironment, evaluateFaceMatch } = require('../utils/faceUtils');
 const connectDB = require('../config/db');
 const { getPool, sql } = connectDB;
 
@@ -104,6 +104,7 @@ async function login(req, res) {
     }
 
     const usingFaceLogin = Array.isArray(faceEmbedding) && faceEmbedding.length > 0;
+    const faceEmbeddingBurst = Array.isArray(faceEmbedding) && faceEmbedding[0] && Array.isArray(faceEmbedding[0]) ? faceEmbedding : null;
 
     if (usingFaceLogin) {
       if (!livenessVerified) {
@@ -115,8 +116,9 @@ async function login(req, res) {
 
       const threshold = Number(process.env.FACE_MATCH_THRESHOLD) || 0.5;
       const storedEmbedding = JSON.parse(user.FaceEmbedding);
-      const matched = isFaceMatch(faceEmbedding, storedEmbedding, threshold);
-      if (!matched) {
+      const burstToCompare = faceEmbeddingBurst || [faceEmbedding];
+      const matchResult = evaluateFaceMatch(storedEmbedding, burstToCompare, threshold);
+      if (!matchResult.matched) {
         return res.status(401).json({ success: false, message: 'Face did not match — please try again or use your password' });
       }
     } else {

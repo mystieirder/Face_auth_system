@@ -21,6 +21,7 @@ export default function WebcamCapture({ onEnrolled }) {
 
   const [modelsReady, setModelsReady] = useState(false);
   const [cameraError, setCameraError] = useState(null);
+  const [consentGiven, setConsentGiven] = useState(false);
   const [envStatus, setEnvStatus] = useState({
     facePresent: false,
     lightingScore: 0,
@@ -52,7 +53,7 @@ export default function WebcamCapture({ onEnrolled }) {
         setCameraError('Camera access denied or unavailable.');
       }
     }
-    if (modelsReady) startCamera();
+    if (modelsReady && consentGiven) startCamera();
 
     const videoNode = videoRef.current;
     return () => {
@@ -61,10 +62,10 @@ export default function WebcamCapture({ onEnrolled }) {
         stream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [modelsReady]);
+  }, [modelsReady, consentGiven]);
 
   useEffect(() => {
-    if (!modelsReady) return undefined;
+    if (!modelsReady || !consentGiven) return undefined;
 
     intervalRef.current = setInterval(async () => {
       if (videoRef.current && videoRef.current.readyState === 4 && !enrolled) {
@@ -74,7 +75,7 @@ export default function WebcamCapture({ onEnrolled }) {
     }, CHECK_INTERVAL_MS);
 
     return () => clearInterval(intervalRef.current);
-  }, [modelsReady, enrolled]);
+  }, [modelsReady, consentGiven, enrolled]);
 
   const isEnvironmentValid =
     envStatus.facePresent &&
@@ -99,6 +100,42 @@ export default function WebcamCapture({ onEnrolled }) {
       setCapturing(false);
     }
   }, [isEnvironmentValid, envStatus, onEnrolled]);
+
+  if (!consentGiven) {
+    return (
+      <div className="scan-panel">
+        <div className="scan-consent">
+          <p className="scan-consent-text">
+            We need access to your camera to capture your face for biometric enrollment.
+            Your camera will only turn on after you allow it, and the stream stops as soon
+            as you leave this page.
+          </p>
+          <div className="scan-consent-actions">
+            <button
+              type="button"
+              className="cred-btn cred-btn--scan"
+              onClick={() => {
+                setCameraError(null);
+                setConsentGiven(true);
+              }}
+            >
+              Allow camera access
+            </button>
+            <button
+              type="button"
+              className="cred-btn"
+              onClick={() =>
+                setCameraError('Camera access is required to complete biometric enrollment.')
+              }
+            >
+              Not now
+            </button>
+          </div>
+          {cameraError && <p className="field-error">{cameraError}</p>}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="scan-panel">

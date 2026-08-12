@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import WebcamCapture from './WebcamCapture';
 
@@ -298,6 +298,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [registrationComplete, setRegistrationComplete] = useState(false);
+  const registerButtonRef = useRef(null);
 
   const isEmailValid = EMAIL_REGEX.test(email.trim());
 
@@ -323,6 +324,13 @@ export default function RegisterPage() {
     passwordsMatch &&
     faceCaptured &&
     selectedPlanId;
+
+  useEffect(() => {
+    if (isFormReady && registerButtonRef.current) {
+      registerButtonRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      registerButtonRef.current.focus({ preventScroll: true });
+    }
+  }, [isFormReady]);
 
   const handleRegisterClick = async () => {
     if (registrationComplete || loading) return;
@@ -557,6 +565,7 @@ export default function RegisterPage() {
 
         {/* Register button */}
         <button
+          ref={registerButtonRef}
           onClick={handleRegisterClick}
           disabled={loading}
           style={styles.registerButton(isFormReady)}

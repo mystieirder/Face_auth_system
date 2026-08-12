@@ -39,17 +39,27 @@ export async function checkEnvironment(videoEl) {
   return { facePresent, lightingScore, framePositioned, detection };
 }
 
-export async function extractFaceEmbedding(videoEl) {
-  const detection = await faceapi
-    .detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.4 }))
-    .withFaceLandmarks()
-    .withFaceDescriptor();
+export async function extractFaceEmbedding(videoEl, captureCount = 3) {
+  const embeddings = [];
 
-  if (!detection) {
-    throw new Error('No face detected — cannot extract embedding');
+  for (let index = 0; index < captureCount; index += 1) {
+    const detection = await faceapi
+      .detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.4 }))
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    if (!detection) {
+      throw new Error('No face detected — cannot extract embedding');
+    }
+
+    embeddings.push(Array.from(detection.descriptor));
+
+    if (index < captureCount - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
   }
 
-  return Array.from(detection.descriptor);
+  return embeddings;
 }
 
 const LEFT_EYE = [36, 37, 38, 39, 40, 41];
@@ -66,9 +76,10 @@ function eyeAspectRatio(points, indices) {
   return horizontal === 0 ? 0 : vertical / horizontal;
 }
 
-export async function checkLiveness(videoEl, durationMs = 6000, sampleIntervalMs = 120) {
+export async function checkLiveness(videoEl, durationMs = 7000, sampleIntervalMs = 150) {
   const earSamples = [];
   const start = Date.now();
+  let lastBlinkWindow = 0;
 
   while (Date.now() - start < durationMs) {
     const detection = await faceapi
@@ -79,7 +90,17 @@ export async function checkLiveness(videoEl, durationMs = 6000, sampleIntervalMs
       const points = detection.landmarks.positions;
       const ear = (eyeAspectRatio(points, LEFT_EYE) + eyeAspectRatio(points, RIGHT_EYE)) / 2;
       earSamples.push(ear);
-      console.log('EAR:', ear.toFixed(3));
+
+      const recentSamples = earSamples.slice(-6);
+      const maxRecentEar = Math.max(...recentSamples);
+      const minRecentEar = Math.min(...recentSamples);
+      const swing = maxRecentEar - minRecentEar;
+
+      if (swing > 0.08) {
+        lastBlinkWindow += 1;
+      }
+
+      console.log('EAR:', ear.toFixed(3), 'swing:', swing.toFixed(3));
     } else {
       console.log('EAR: no face detected this frame');
     }
@@ -87,16 +108,16 @@ export async function checkLiveness(videoEl, durationMs = 6000, sampleIntervalMs
     await new Promise((resolve) => setTimeout(resolve, sampleIntervalMs));
   }
 
-  if (earSamples.length < 5) {
+  if (earSamples.length < 6) {
     return { live: false, reason: 'Could not track your face consistently — hold still and try again' };
   }
 
   const maxEar = Math.max(...earSamples);
   const minEar = Math.min(...earSamples);
   const earSwing = maxEar - minEar;
-  console.log(`Liveness check — min: ${minEar.toFixed(3)}, max: ${maxEar.toFixed(3)}, swing: ${earSwing.toFixed(3)}`);
+  const blinkDetected = earSwing > 0.08 || lastBlinkWindow >= 2;
 
-  const blinkDetected = earSwing > 0.05;
+  console.log(`Liveness check — min: ${minEar.toFixed(3)}, max: ${maxEar.toFixed(3)}, swing: ${earSwing.toFixed(3)}, blinkWindow: ${lastBlinkWindow}`);
 
   if (!blinkDetected) {
     return { live: false, reason: 'No blink detected — please look at the camera naturally and try again' };

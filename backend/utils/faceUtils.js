@@ -19,19 +19,50 @@ function validateEnvironment(environmentCheck, minLighting) {
   return { valid: errors.length === 0, errors };
 }
 
-// Compares two face embeddings using Euclidean distance
-function isFaceMatch(embeddingA, embeddingB, threshold) {
+function computeDistance(embeddingA, embeddingB) {
   if (!embeddingA || !embeddingB || embeddingA.length !== embeddingB.length) {
-    return false;
+    return null;
   }
 
   let sumSquares = 0;
   for (let i = 0; i < embeddingA.length; i++) {
     sumSquares += Math.pow(embeddingA[i] - embeddingB[i], 2);
   }
-  const distance = Math.sqrt(sumSquares);
+  return Math.sqrt(sumSquares);
+}
+
+function evaluateFaceMatch(embeddingA, embeddingBurst, threshold) {
+  if (!Array.isArray(embeddingBurst) || embeddingBurst.length === 0) {
+    return { matched: false, confidence: 0, sampleCount: 0, averageDistance: null };
+  }
+
+  const distances = embeddingBurst
+    .map((sample) => (Array.isArray(sample) ? computeDistance(embeddingA, sample) : null))
+    .filter((distance) => distance !== null);
+
+  if (distances.length === 0) {
+    return { matched: false, confidence: 0, sampleCount: 0, averageDistance: null };
+  }
+
+  const averageDistance = distances.reduce((sum, distance) => sum + distance, 0) / distances.length;
+  const confidence = Math.max(0, 1 - averageDistance / 1.2);
+  const matched = averageDistance <= threshold && confidence >= 0.7;
+
+  return { matched, confidence, sampleCount: distances.length, averageDistance };
+}
+
+// Compares one embedding to another using Euclidean distance
+function isFaceMatch(embeddingA, embeddingB, threshold) {
+  if (Array.isArray(embeddingB) && Array.isArray(embeddingB[0])) {
+    return evaluateFaceMatch(embeddingA, embeddingB, threshold).matched;
+  }
+
+  const distance = computeDistance(embeddingA, embeddingB);
+  if (distance === null) {
+    return false;
+  }
 
   return distance <= threshold;
 }
 
-module.exports = { validateEnvironment, isFaceMatch };
+module.exports = { validateEnvironment, isFaceMatch, evaluateFaceMatch, computeDistance };

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const SESSION_KEY_PREFIX = 'profileForm:';
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const GESTURE_WS_URL = process.env.REACT_APP_GESTURE_WS_URL || 'ws://localhost:8765';
 
 const DEFAULT_FORM = {
   fullName: '',
@@ -32,6 +33,13 @@ const styles = {
   micBtn: { background: 'none', border: '2px solid #d1d5db', borderRadius: '50%', width: 44, height: 44, cursor: 'pointer', fontSize: 18 },
   micBtnListening: { background: '#ef4444', borderColor: '#ef4444', color: '#fff' },
   tooltip: { fontStyle: 'italic', fontSize: 13, opacity: 0.8, flexGrow: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  modesRow: { display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' },
+  modeBox: { flex: '1 1 220px', background: '#f9fafb', border: '1px solid #eef0f3', borderRadius: 10, padding: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: 200 },
+  modeBoxHeader: { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, color: '#374151' },
+  modeStatusDot: { width: 9, height: 9, borderRadius: '50%', flexShrink: 0 },
+  modeStatusText: { fontSize: 12, color: '#6b7280', textAlign: 'center', minHeight: '1.5em', margin: 0 },
+  gestureFeed: { width: '100%', maxWidth: 220, aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 8, background: '#000' },
+  gestureFeedPlaceholder: { width: '100%', maxWidth: 220, aspectRatio: '4 / 3', borderRadius: 8, border: '1px dashed #d1d5db', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', fontSize: 11, color: '#9ca3af', padding: 10, boxSizing: 'border-box' },
   section: { marginBottom: 16 },
   label: { display: 'block', marginBottom: 6, fontSize: 13, fontWeight: 600, color: '#374151' },
   input: { width: '100%', padding: '11px 12px', borderRadius: 8, border: '1px solid #d1d5db', boxSizing: 'border-box', fontSize: 14 },
@@ -310,6 +318,12 @@ export default function ProfilePage({ user, onLogout }) {
     els[i > -1 && i < els.length - 1 ? i + 1 : 0].focus();
   }
 
+  function focusPrevField(current) {
+    const els = Array.from(formRef.current.querySelectorAll('input, select, textarea'));
+    const i = els.indexOf(current);
+    els[i > 0 ? i - 1 : els.length - 1].focus();
+  }
+
   function processVoiceCommand(command) {
     const active = document.activeElement;
 
@@ -332,6 +346,7 @@ export default function ProfilePage({ user, onLogout }) {
       return;
     }
     if (command === 'next field') return focusNextField(active);
+    if (command === 'previous field' || command === 'prev field') return focusPrevField(active);
 
     const fieldMap = {
       'select full name': FIELD_ID_MAP.fullName,
@@ -359,6 +374,105 @@ export default function ProfilePage({ user, onLogout }) {
       }
     }
   }
+
+  // =====================================================================
+  // Hand Gesture control — connects to the local web_bridge.py WebSocket
+  // server on page load, shows the live annotated camera feed, and
+  // executes the gesture command directly the moment it arrives.
+  // =====================================================================
+  const [gestureStatus, setGestureStatus] = useState('connecting'); // connecting | connected | disconnected
+  const [gestureFrame, setGestureFrame] = useState(null);
+  const [gestureLastAction, setGestureLastAction] = useState('');
+  const gestureWsRef = useRef(null);
+  const gestureRetryRef = useRef(null);
+  const executeGestureCommandRef = useRef(() => {});
+
+  // Always keep this pointed at the latest closures (form state, capture
+  // stage, etc.) so the long-lived WebSocket connection never acts on
+  // stale data, even though it's only opened once.
+  useEffect(() => {
+    executeGestureCommandRef.current = function executeGestureCommand(command) {
+      const active = document.activeElement;
+      switch (command) {
+        case 'next_field':
+          focusNextField(active);
+          break;
+        case 'prev_field':
+          focusPrevField(active);
+          break;
+        case 'select': {
+          if (active && active.tagName === 'SELECT') {
+            active.selectedIndex = (active.selectedIndex + 1) % active.options.length;
+            active.dispatchEvent(new Event('change', { bubbles: true }));
+          } else if (active && (active.tagName === 'BUTTON' || active.type === 'submit')) {
+            active.click();
+          }
+          break;
+        }
+        case 'confirm': {
+          if (captureStage === 'captured') {
+            handleConfirm();
+          } else {
+            const els = Array.from(formRef.current.querySelectorAll('input, select, textarea'));
+            const isLastField = els.length > 0 && els.indexOf(active) === els.length - 1;
+            if (isLastField) handleSubmit();
+            else focusNextField(active);
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    };
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    function connect() {
+      if (cancelled) return;
+      setGestureStatus((prev) => (prev === 'connected' ? prev : 'connecting'));
+      const ws = new WebSocket(GESTURE_WS_URL);
+      gestureWsRef.current = ws;
+
+      ws.onopen = () => {
+        if (cancelled) return;
+        setGestureStatus('connected');
+      };
+      ws.onmessage = (event) => {
+        if (cancelled) return;
+        let msg;
+        try {
+          msg = JSON.parse(event.data);
+        } catch (err) {
+          return;
+        }
+        if (msg.type === 'frame' && msg.data) {
+          setGestureFrame(`data:image/jpeg;base64,${msg.data}`);
+        } else if (msg.type === 'action' && msg.command) {
+          setGestureLastAction(msg.command);
+          executeGestureCommandRef.current(msg.command);
+        }
+      };
+      ws.onclose = () => {
+        if (cancelled) return;
+        setGestureStatus('disconnected');
+        gestureRetryRef.current = setTimeout(connect, 3000);
+      };
+      ws.onerror = () => {
+        ws.close();
+      };
+    }
+
+    connect();
+
+    return () => {
+      cancelled = true;
+      if (gestureRetryRef.current) clearTimeout(gestureRetryRef.current);
+      if (gestureWsRef.current) gestureWsRef.current.close();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) {
     return (
@@ -436,17 +550,63 @@ export default function ProfilePage({ user, onLogout }) {
           <p style={styles.captureStatus}>{captureStatus}</p>
         </div>
 
-        {/* FR-4: Voice-Guided Data Entry */}
-        <div style={styles.speechControls}>
-          <button
-            type="button"
-            style={{ ...styles.micBtn, ...(listening ? styles.micBtnListening : {}) }}
-            onClick={toggleMic}
-            title="Toggle Voice Recognition"
-          >
-            🎙️
-          </button>
-          <span style={styles.tooltip}>{transcript}</span>
+        {/* FR-4: Voice-Guided Data Entry + Hand Gesture control — side by side */}
+        <div style={styles.modesRow}>
+          <div style={styles.modeBox}>
+            <div style={styles.modeBoxHeader}>
+              <span>🎙️ Speech-to-Text</span>
+              <span
+                style={{
+                  ...styles.modeStatusDot,
+                  background: listening ? '#16a34a' : '#9ca3af',
+                }}
+              />
+            </div>
+            <button
+              type="button"
+              style={{ ...styles.micBtn, ...(listening ? styles.micBtnListening : {}) }}
+              onClick={toggleMic}
+              title="Toggle Voice Recognition"
+            >
+              🎙️
+            </button>
+            <p style={styles.modeStatusText}>{transcript}</p>
+          </div>
+
+          <div style={styles.modeBox}>
+            <div style={styles.modeBoxHeader}>
+              <span>✋ Hand Gesture</span>
+              <span
+                style={{
+                  ...styles.modeStatusDot,
+                  background:
+                    gestureStatus === 'connected'
+                      ? '#16a34a'
+                      : gestureStatus === 'connecting'
+                      ? '#f59e0b'
+                      : '#ef4444',
+                }}
+              />
+            </div>
+            {gestureFrame ? (
+              <img src={gestureFrame} alt="Hand gesture camera feed" style={styles.gestureFeed} />
+            ) : (
+              <div style={styles.gestureFeedPlaceholder}>
+                {gestureStatus === 'connecting'
+                  ? 'Connecting to gesture control…'
+                  : 'Run python web_bridge.py to start hand gesture control'}
+              </div>
+            )}
+            <p style={styles.modeStatusText}>
+              {gestureStatus === 'connected'
+                ? gestureLastAction
+                  ? `Last command: ${gestureLastAction.replace('_', ' ')}`
+                  : 'Connected — show a gesture'
+                : gestureStatus === 'connecting'
+                ? 'Connecting…'
+                : 'Not connected — retrying…'}
+            </p>
+          </div>
         </div>
 
         {/* FR-3: Profile form */}
@@ -487,8 +647,11 @@ export default function ProfilePage({ user, onLogout }) {
         <div style={styles.commandGuide}>
           <strong>Voice Commands:</strong>
           <p>"Select [Field Name]" • "Clear Field" • "Delete Last Word"</p>
-          <p>"Next Field" • "Submit Profile" • "Logout"</p>
+          <p>"Next Field" • "Previous Field" • "Submit Profile" • "Logout"</p>
           <p>"Take Photo" • "Retake Photo" • "Confirm Photo"</p>
+          <strong style={{ display: 'block', marginTop: 10 }}>Hand Gestures:</strong>
+          <p>👍 Thumbs Up = Confirm &nbsp;•&nbsp; ✋ Open Palm = Next Field</p>
+          <p>👋 Side Sweep = Previous Field &nbsp;•&nbsp; 🤏 Pinch = Select</p>
         </div>
       </div>
     </div>
