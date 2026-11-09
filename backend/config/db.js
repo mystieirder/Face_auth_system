@@ -1,23 +1,15 @@
-const sql = require('mssql');
-
-const config = {
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  server: process.env.DB_SERVER,
-  database: process.env.DB_DATABASE,
-  port: parseInt(process.env.DB_PORT),
-  options: {
-    encrypt: false,
-    trustServerCertificate: true,
-  },
-};
+const { Pool } = require('pg');
 
 let pool;
 
 async function connectDB() {
   try {
-    pool = await new sql.ConnectionPool(config).connect();
-    console.log('Connected to SQL Server');
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    });
+    await pool.query('SELECT 1');
+    console.log('Connected to PostgreSQL');
     return pool;
   } catch (err) {
     console.error('Database Connection Failed! Bad Config: ', err);
@@ -34,4 +26,3 @@ function getPool() {
 
 module.exports = connectDB;
 module.exports.getPool = getPool;
-module.exports.sql = sql;

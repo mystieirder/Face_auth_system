@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { findByEmailOrUsername, createUser } = require('../models/User');
 const { validateEnvironment, evaluateFaceMatch } = require('../utils/faceUtils');
 const connectDB = require('../config/db');
-const { getPool, sql } = connectDB;
+const { getPool } = connectDB;
 
 const SALT_ROUNDS = 12;
 
@@ -16,12 +16,12 @@ async function register(req, res) {
     }
 
     const pool = getPool();
-    const paymentCheck = await pool
-      .request()
-      .input('orderId', sql.NVarChar, paymentOrderId)
-      .query("SELECT * FROM Payments WHERE RazorpayOrderId = @orderId AND Status = 'paid' AND UserId IS NULL");
+    const paymentCheck = await pool.query(
+      "SELECT * FROM payments WHERE razorpay_order_id = $1 AND status = 'paid' AND user_id IS NULL",
+      [paymentOrderId]
+    );
 
-    if (paymentCheck.recordset.length === 0) {
+    if (paymentCheck.rows.length === 0) {
       return res.status(402).json({ success: false, message: 'No valid payment found for this order' });
     }
 
@@ -54,16 +54,12 @@ async function register(req, res) {
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
     const user = await createUser({ username, email, passwordHash, faceEmbedding, environmentCheck });
 
-    await pool
-      .request()
-      .input('userId', sql.Int, user.Id)
-      .input('orderId', sql.NVarChar, paymentOrderId)
-      .query('UPDATE Payments SET UserId = @userId WHERE RazorpayOrderId = @orderId');
+    await pool.query(
+      'UPDATE payments SET user_id = $1, username = $2 WHERE razorpay_order_id = $3',
+      [user.Id, user.Username, paymentOrderId]
+    );
 
-    await pool
-      .request()
-      .input('userId', sql.Int, user.Id)
-      .query('UPDATE Users SET HasPaid = 1 WHERE Id = @userId');
+    await pool.query('UPDATE users SET has_paid = TRUE WHERE id = $1', [user.Id]);
 
     return res.status(201).json({
       success: true,

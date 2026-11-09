@@ -1,6 +1,12 @@
-node_modules/
 .env
-dist/
+**/.env
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+.idea/
 build/
-*.log
-.DS_Store
+dist/
+backend/uploads/
+profile_photos/
+users.json
